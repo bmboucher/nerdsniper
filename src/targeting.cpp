@@ -12,10 +12,21 @@ void crosshair() {
     }
 }
 
+#define N_BATTERY_LEVELS 5
+
 void battery() {
     screen.setFont(u8g2_font_battery19_tn);
     screen.setFontDirection(1);
-    screen.drawStr(BATTERY_X, BATTERY_Y, "5"); // TODO: read actual battery voltage
+
+    const float MIN_BATTERY = 3.3;
+    const float MAX_BATTERY = 4.5;
+    int relative_battery = int(round(
+        N_BATTERY_LEVELS * (battery_level - MIN_BATTERY) / (MAX_BATTERY - MIN_BATTERY)));
+    if (relative_battery < 0) { relative_battery = 0; }
+    if (relative_battery > N_BATTERY_LEVELS) { relative_battery = N_BATTERY_LEVELS; }
+    const char batt_char[1] = {(char)('0' + relative_battery)};
+
+    screen.drawStr(BATTERY_X, BATTERY_Y, batt_char);
 }
 
 void rangeMeter() {

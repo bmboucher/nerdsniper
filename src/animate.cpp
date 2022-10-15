@@ -7,6 +7,7 @@ unsigned long last_stat_print = 0;
 unsigned long n_paint_calls = 0;
 unsigned long n_frames = 0;
 
+uint8_t range_phase = 0;
 bool inc_nerd = true;
 
 void initAnimation() {
@@ -18,16 +19,20 @@ void initAnimation() {
 
 void nextFrameTargeting() {
     // update range level
-    u8g2_int_t tgt_range_level = random(-RM_LOOSE, RM_L + RM_LOOSE + 1);
-    if (tgt_range_level > range_level) {
-        range_level++;
-    } else if (tgt_range_level < range_level) {
-        range_level--;
-    }
-    if (range_level < 0) {
-        range_level = 0;
-    } else if (range_level > RM_L) {
-        range_level = RM_L;
+    range_phase++;
+    if (range_phase == 2) {
+        u8g2_int_t tgt_range_level = random(-RM_LOOSE, RM_L + RM_LOOSE + 1);
+        if (tgt_range_level > range_level + RM_STICKY) {
+            range_level++;
+        } else if (tgt_range_level < range_level - RM_STICKY) {
+            range_level--;
+        }
+        if (range_level < 0) {
+            range_level = 0;
+        } else if (range_level > RM_L) {
+            range_level = RM_L;
+        }
+        range_phase = 0;
     }
 
     // update nerd level
@@ -37,11 +42,21 @@ void nextFrameTargeting() {
         nerd_level--;
     }
     if (nerd_level > NM_H) {
+        // turn around at top
         nerd_level = NM_H;
         inc_nerd = false;
     } else if (nerd_level < NM_MIN_VAL) {
+        // turn around at bottom
         nerd_level = NM_MIN_VAL;
         inc_nerd = true;
+    } else {
+        // randomly flip direction in between
+        // offset makes flip more likely near extremes
+        u8g2_int_t offset = inc_nerd ? nerd_level : (NM_H - nerd_level);
+        // probability varies from 0.05 (offset = 0) to ~0.1 (offset = NM_H)
+        if (random(-offset, 10 * NM_H) < NM_H) {
+            inc_nerd = !inc_nerd;
+        }
     }
 }
 

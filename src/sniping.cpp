@@ -1,8 +1,6 @@
 #include "nerdsniper.h"
 
-#define N_SNIPES 3
-#define MAX_LINES 30
-#define BUFFER_SIZE 500
+#define MAX_LINES 200
 #define LINE_BUFFER_SIZE 30
 #define LINE_SPACING 2
 
@@ -28,6 +26,7 @@ const char* snipe_02 =
     "If they call balderdash after all prisoners have visited the room once, all are freed. "
     "If they call balderdash early, all are shot. They have one chance to plan. "
     "What plan do they make?";
+#define N_SNIPES 3
 const char *const snipes[] = {snipe_00, snipe_01, snipe_02};
 
 const char* curr_snipe = nullptr;
@@ -39,7 +38,8 @@ u8g2_int_t line_height = 0;
 
 u8g2_int_t scroll = 0;
 uint8_t scroll_phase = 0;
-bool scroll_complete = false;
+bool scroll_finished = false;
+bool scroll_at_bottom = false;
 unsigned long snipe_mark = 0;
 
 #define FONT u8g2_font_7x13B_tf
@@ -87,7 +87,8 @@ void beginSnipe() {
     }
     line_lengths[n_lines - 1] = line_pos;
     scroll = 0;
-    scroll_complete = false;
+    scroll_finished = false;
+    scroll_at_bottom = false;
 
     // Print snipe to serial for debugging
     for (size_t i_line = 0; i_line < n_lines; i_line++) {
@@ -113,14 +114,22 @@ void updateSnipe() {
             scroll_phase = 0;
             scroll++;
         }
-    } else if (!scroll_complete) {
+    } else if (!scroll_at_bottom) {
         // first frame after scroll is finished, start the clock
-        scroll_complete = true;
+        scroll_at_bottom = true;
         snipe_mark = millis();
     } else {
         if (curr_t < snipe_mark || curr_t >= snipe_mark + SNIPE_TIME) {
-            // reset when snipe is finished
-            targeting_mode = true;
+            scroll_finished = true;
+            if (digitalRead(TRIGGER_IN) == HIGH) {
+                // if the trigger is still depressed, restart the scroll
+                scroll_at_bottom = false;
+                scroll = 0;
+                snipe_mark = millis();
+            } else {
+                // reset when snipe is finished
+                targeting_mode = true;
+            }
         }
     }
 }

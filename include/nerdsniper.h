@@ -7,6 +7,8 @@
 // defined in main.cpp
 extern U8G2_SSD1309_128X64_NONAME0_1_4W_HW_SPI screen;
 extern bool targeting_mode;
+extern bool led_blink;
+extern bool led_blink_active;
 
 // defined in animate.cpp
 extern u8g2_int_t range_level;
@@ -22,11 +24,25 @@ void beginSnipe();
 void updateSnipe();
 void drawSnipe();
 
+// defined in battery.cpp
+extern float battery_level;
+void initBattery();
+void readBattery();
+
+// defined in front_led.cpp
+void initFrontLED();
+void startFrontLEDSequence();
+void updateFrontLED();
+
 // pinout
-#define SCREEN_CS 17
-#define SCREEN_DC 20
-#define SCREEN_RST 21
-#define TRIGGER 1 // TODO: real pin
+#define SCREEN_CS   17
+#define SCREEN_DC   20
+#define SCREEN_RST  21
+#define TRIGGER_IN  28
+#define TRIGGER_OUT 27
+#define VSYS_ADC    29
+#define FRONT_LED   15
+#define BACK_LED    22
 
 // screen size
 #define SCREEN_W 128
@@ -37,6 +53,9 @@ void drawSnipe();
 // animation speed
 #define FRAME_RATE 40
 #define FRAME_DELAY (1000/FRAME_RATE)
+
+// time to pulse sound board after trigger is pulled
+#define SOUND_TRIGGER_TIME 100
 
 // crosshair dimensions
 #define R (C_Y-6)          // outer circle radius
@@ -57,6 +76,7 @@ void drawSnipe();
 #define RM_L 32            // length of meter
 #define RM_TICK 3          // size of tickmark
 #define RM_LOOSE 10        // the higher this value, the more the meter drifts from center
+#define RM_STICKY 3        // the higher this value, the more likely the meter doesn't move per frame
 #define RM_TEXT_HEIGHT (RM_H-RM_TICK-2) // bottom of label
 
 // nerd meter dimensions
